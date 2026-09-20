@@ -1,0 +1,47 @@
+name: Build Nilo APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'nilo_ai_v04-1.zip'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Unzip Nilo project
+        run: |
+          rm -rf nilo_build
+          mkdir nilo_build
+          unzip -q nilo_ai_v04-1.zip -d nilo_build
+          test -f nilo_build/nilo_ai_v04/pubspec.yaml
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create Android project files
+        working-directory: nilo_build/nilo_ai_v04
+        run: flutter create . --platforms=android --project-name=nilo_ai
+
+      - name: Get dependencies
+        working-directory: nilo_build/nilo_ai_v04
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: nilo_build/nilo_ai_v04
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nilo-Android
+          path: nilo_build/nilo_ai_v04/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error

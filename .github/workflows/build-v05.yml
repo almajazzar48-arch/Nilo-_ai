@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'nilo_ai_v05.zip'
+      - 'nilo_ai_v05_fixed.zip'
       - '.github/workflows/build-v05.yml'
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
         run: |
           rm -rf nilo_build
           mkdir nilo_build
-          unzip -q nilo_ai_v05.zip -d nilo_build
+          unzip -q nilo_ai_v05_fixed.zip -d nilo_build
           test -f nilo_build/nilo_ai_v05/pubspec.yaml
 
       - name: Set up Flutter
@@ -27,9 +27,13 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Android project files
+      - name: Create Android project
         working-directory: nilo_build/nilo_ai_v05
-        run: flutter create . --platforms=android --project-name=nilo_ai
+        run: |
+          flutter create . \
+            --platforms=android \
+            --project-name=nilo_ai_v05 \
+            --org=com.nilo.ai.v05
 
       - name: Get dependencies
         working-directory: nilo_build/nilo_ai_v05

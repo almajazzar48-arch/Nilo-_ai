@@ -1,0 +1,57 @@
+name: Build Nilo v0.7 APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'nilo_ai_v07_final.zip'
+      - '.github/workflows/build-v07.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Prepare Nilo source
+        shell: bash
+        run: |
+          set -e
+          rm -rf nilo_build
+          mkdir -p nilo_build
+          unzip -q nilo_ai_v07_final.zip -d nilo_build
+          PROJECT="nilo_build/nilo_ai_v07"
+          test -f "$PROJECT/pubspec.yaml"
+          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
+
+      - name: Create Android project
+        working-directory: nilo_build/nilo_ai_v07
+        run: |
+          flutter create . \
+            --platforms=android \
+            --project-name=nilo_ai_v07 \
+            --org=com.nilo.ai.v07
+
+      - name: Configure microphone permission
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("nilo_build/nilo_ai_v07/android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+
+          perm = '<uses-permission android:name="android.permission.RECORD_AUDIO"/>'
